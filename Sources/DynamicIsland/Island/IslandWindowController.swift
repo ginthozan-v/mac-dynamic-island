@@ -40,18 +40,44 @@ final class IslandWindowController {
         reposition()
         panel.orderFrontRegardless()
 
-        // Poll for responsiveness during drags (no mouseMoved events then), plus monitors for snappy hover.
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.updatePointer() }
-        }
+        // Event-driven: mouse monitors wake us up, and a 30 Hz poll runs only while it's needed
+        // (pointer near the island, island expanded, or a button held — drag sessions from other
+        // apps don't always deliver drag events). Idle, the app does no periodic work.
         let mask: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .leftMouseDown, .leftMouseUp]
         if let g = NSEvent.addGlobalMonitorForEvents(matching: mask, handler: { [weak self] _ in
-            MainActor.assumeIsolated { self?.updatePointer() }
+            MainActor.assumeIsolated { self?.pointerEvent() }
         }) { monitors.append(g) }
         if let l = NSEvent.addLocalMonitorForEvents(matching: mask, handler: { [weak self] event in
-            MainActor.assumeIsolated { self?.updatePointer() }
+            MainActor.assumeIsolated { self?.pointerEvent() }
             return event
         }) { monitors.append(l) }
+        pointerEvent()
+    }
+
+    private func pointerEvent() {
+        updatePointer()
+        updatePolling()
+    }
+
+    /// Starts the poll when the pointer could be about to interact with the island; stops it otherwise.
+    private func updatePolling() {
+        let pressed = NSEvent.pressedMouseButtons & 1 != 0
+        let near = hotRect().insetBy(dx: -90, dy: -70).contains(NSEvent.mouseLocation)
+        let needed = viewModel.isExpanded || near || pressed || expandTask != nil || collapseTask != nil
+        if needed, pollTimer == nil {
+            pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.pointerEvent() }
+            }
+            pollTimer?.tolerance = 0.005
+        } else if !needed, let timer = pollTimer {
+            timer.invalidate()
+            pollTimer = nil
+        }
+    }
+
+    /// Only tell the window server when click-through actually changes.
+    private func setClickThrough(_ value: Bool) {
+        if panel.ignoresMouseEvents != value { panel.ignoresMouseEvents = value }
     }
 
     private func reposition() {
@@ -96,7 +122,7 @@ final class IslandWindowController {
         }
         wasPressed = pressed
 
-        panel.ignoresMouseEvents = !inside
+        setClickThrough(!inside)
 
         if inside {
             collapseTask?.cancel(); collapseTask = nil

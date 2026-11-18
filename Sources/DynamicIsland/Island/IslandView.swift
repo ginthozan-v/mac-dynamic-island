@@ -256,7 +256,7 @@ struct IslandTabBar: View {
         HStack(spacing: 0) {
             ForEach(vm.pages, id: \.self) { page in
                 let selected = vm.currentTab == page
-                TabBarItem(icon: page.icon, selected: selected, dot: dot(for: page)) {
+                TabBarItem(icon: page.icon, selected: selected, dot: dot(for: page), label: page.title) {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) { vm.tab = page }
                 }
                 .background {
@@ -308,6 +308,7 @@ struct SettingsButton: View {
         .buttonStyle(PressScaleStyle())
         .onHover { hovering = $0 }
         .help("Settings")
+        .accessibilityLabel("Settings")
     }
 }
 
@@ -315,6 +316,7 @@ struct TabBarItem: View {
     let icon: String
     let selected: Bool
     var dot: Color? = nil
+    var label: String = ""
     let action: () -> Void
     @State private var hovering = false
 
@@ -334,6 +336,8 @@ struct TabBarItem: View {
         .buttonStyle(PressScaleStyle())
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.15), value: selected)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 

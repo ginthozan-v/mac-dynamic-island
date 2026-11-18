@@ -6,6 +6,11 @@ struct DynamicIslandApp: App {
 
     var body: some Scene {
         MenuBarExtra("Dynamic Island", systemImage: "capsule.inset.filled") {
+            Button("About Dynamic Island") {
+                NSApp.activate()
+                NSApp.orderFrontStandardAboutPanel(nil)
+            }
+            Divider()
             SettingsLink { Text("Settings…") }
                 .keyboardShortcut(",")
             Divider()

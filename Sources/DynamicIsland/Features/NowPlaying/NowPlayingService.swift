@@ -82,9 +82,15 @@ final class NowPlayingService {
         observers.append(ws.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.refresh() }
         })
-        timer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refresh() }
+        // Players announce play / pause / track changes themselves; polling only keeps the
+        // progress bar honest while something is actually playing.
+        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.isPlaying else { return }
+                self.refresh()
+            }
         }
+        timer?.tolerance = 1
         refresh()
     }
 
@@ -170,8 +176,10 @@ final class NowPlayingService {
 
     func refresh() {
         if isRefreshing { needsRefresh = true; return }
-        let running = Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier))
-        let candidates = [Player.music, .spotify].filter { running.contains($0.bundleID) }
+        // Targeted lookups: scanning every running app's bundle ID is a LaunchServices round-trip each.
+        let candidates = [Player.music, .spotify].filter {
+            !NSRunningApplication.runningApplications(withBundleIdentifier: $0.bundleID).isEmpty
+        }
         guard !candidates.isEmpty else { clear(); return }
 
         isRefreshing = true

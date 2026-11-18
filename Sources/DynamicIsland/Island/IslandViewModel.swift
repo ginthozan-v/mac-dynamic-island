@@ -152,6 +152,7 @@ final class IslandViewModel {
             self.tab = .shelf
         }
         focusShelfUntil = .distantPast
+        if !isExpanded { nowPlaying.refresh() } // sync position/state right as the player appears
         isExpanded = true
         if currentTab == .shelf { pendingScreenshots.removeAll() }
     }

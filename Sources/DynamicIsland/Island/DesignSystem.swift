@@ -35,8 +35,24 @@ enum DS {
 struct GlyphButton: View {
     let icon: String
     var size: CGFloat = 15
+    /// Spoken name for VoiceOver; defaults to a readable name for the icon.
+    var label: String? = nil
     let action: () -> Void
     @State private var hovering = false
+
+    private static let spokenNames: [String: String] = [
+        "play.fill": "Play", "pause.fill": "Pause",
+        "backward.fill": "Previous track", "forward.fill": "Next track",
+        "stop.fill": "Stop timer", "goforward.60": "Add one minute",
+        "minus": "Shorter", "plus": "Longer",
+        "trash": "Clear shelf", "xmark": "Close",
+    ]
+
+    private var spokenName: String {
+        if let label { return label }
+        if icon.hasPrefix("speaker") { return "Volume" }
+        return Self.spokenNames[icon] ?? icon
+    }
 
     var body: some View {
         Button(action: action) {
@@ -48,6 +64,7 @@ struct GlyphButton: View {
         }
         .buttonStyle(PressScaleStyle())
         .onHover { hovering = $0 }
+        .accessibilityLabel(spokenName)
     }
 }
 

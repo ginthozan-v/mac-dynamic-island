@@ -75,13 +75,13 @@ final class ScreenshotWatcher {
         )) ?? []
     }
 
-    private static func isScreenCapture(_ url: URL) -> Bool {
+    private nonisolated static func isScreenCapture(_ url: URL) -> Bool {
         getxattr(url.path, "com.apple.metadata:kMDItemIsScreenCapture", nil, 0, 0, 0) > 0
     }
 
     /// The region that was captured, in global top-left-origin points, from the
     /// `kMDItemScreenCaptureGlobalRect` attribute macOS writes as `[x, y, width, height]`.
-    static func captureRect(of url: URL) -> CGRect? {
+    nonisolated static func captureRect(of url: URL) -> CGRect? {
         let name = "com.apple.metadata:kMDItemScreenCaptureGlobalRect"
         let size = getxattr(url.path, name, nil, 0, 0, 0)
         guard size > 0 else { return nil }

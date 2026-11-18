@@ -14,6 +14,11 @@ let package = Package(
                 .linkedFramework("ServiceManagement"),
                 .linkedFramework("QuickLookThumbnailing"),
             ]
-        )
+        ),
+        .testTarget(
+            name: "DynamicIslandTests",
+            dependencies: ["DynamicIsland"],
+            path: "Tests/DynamicIslandTests"
+        ),
     ]
 )

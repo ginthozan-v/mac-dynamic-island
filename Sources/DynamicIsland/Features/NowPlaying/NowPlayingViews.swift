@@ -104,6 +104,10 @@ struct MusicPage: View {
         .animation(.spring(response: 0.45, dampingFraction: 0.7), value: np.isPlaying)
             .onTapGesture { np.openPlayerApp() }
             .help(np.player.map { "Open \($0.rawValue)" } ?? "")
+            .accessibilityElement()
+            .accessibilityLabel(np.hasTrack ? "Album art for \(np.title)" : "No track playing")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { np.openPlayerApp() }
     }
 
     private var controls: some View {

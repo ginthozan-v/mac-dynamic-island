@@ -164,5 +164,9 @@ struct ShelfItemView: View {
         .onTapGesture(count: 2) { NSWorkspace.shared.open(item.url) }
         .onDrag { NSItemProvider(contentsOf: item.url) ?? NSItemProvider() }
         .help(item.url.path)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(item.url.lastPathComponent)
+        .accessibilityAction(named: "Open") { NSWorkspace.shared.open(item.url) }
+        .accessibilityAction(named: "Remove from shelf", onRemove)
     }
 }

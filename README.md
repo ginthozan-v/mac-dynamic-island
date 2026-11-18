@@ -57,9 +57,10 @@ make run
 | `make build` | Compiles a release build and assembles `build/DynamicIsland.app` (ad-hoc signed) |
 | `make run` | Builds, quits any running copy, and launches the app |
 | `make install` | Builds and copies the app to `~/Applications` |
+| `make test` | Runs the unit tests (Swift Testing) |
 | `make clean` | Removes build output |
 
-The app runs as a menu bar agent (no Dock icon). Use the capsule icon in the menu bar for **Settings** and **Quit**.
+The app runs as a menu bar agent (no Dock icon). Use the capsule icon in the menu bar for **About**, **Settings** and **Quit**.
 
 ## Permissions
 
@@ -82,6 +83,26 @@ Open **Settings…** from the menu bar icon:
 - Liquid Glass controls
 - Battery alerts
 - Launch at login
+
+---
+
+## Performance
+
+Built to sit quietly in the background:
+
+| | Idle | Notes |
+| --- | --- | --- |
+| **CPU** | ~0% | No periodic work while idle: pointer tracking is event-driven and only polls while the pointer is near the island |
+| **Wakeups** | 0 / s | Measured with `top` with the pointer away from the notch |
+| **Memory** | ~16–40 MB | Physical footprint, measured with `footprint`: ~16 MB at launch, up to ~40 MB once artwork and shelf thumbnails are loaded (artwork is downscaled to 256 px; the fly-in image is released after the flight) |
+| **Leaks** | 0 | Checked with `leaks` |
+
+Now Playing doesn't poll while music is paused; Music and Spotify announce changes themselves. The waveform animates only while a track is playing.
+
+## Accessibility
+
+- Every icon-only control has a VoiceOver label (playback, timer, tabs, shelf items with Open / Remove actions).
+- Glass controls fall back to solid ones when **Reduce Transparency** is on.
 
 ---
 
@@ -124,6 +145,13 @@ build/DynamicIsland.app/Contents/MacOS/DynamicIsland --snapshot /tmp/island -gla
 ```
 
 `-glassStyle NO` overrides the glass setting for that run only. The offscreen renderer can't draw Liquid Glass, scroll views or native controls.
+
+## Distribution
+
+`make build` produces an **ad-hoc signed** app. That's fine for building and running it yourself, but:
+
+- macOS may ask for permissions again after each rebuild, because the ad-hoc signature changes.
+- To share a build with others, sign it with a **Developer ID Application** certificate and **notarize** it with `xcrun notarytool`. Otherwise Gatekeeper will block it on other Macs.
 
 ## Known limitations
 
